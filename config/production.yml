@@ -1,0 +1,25 @@
+# Configuration production CT-QC
+extends: "default.yml"
+
+environment: "production"
+
+processing:
+  strict_validation: true
+  dry_run: false
+
+logging:
+  console_level: "WARNING"
+  file_level: "INFO"
+
+engine:
+  validation:
+    strict_mode: true
+    log_warnings: false
+
+exports:
+  parquet_enabled: true
+  access_enabled: true
+  audit_enabled: true
+
+audit:
+  retention_days: 90

@@ -1,0 +1,89 @@
+# Configuration par défaut CT-QC - Version simplifiée
+version: "2025.1"
+environment: "development"
+
+# Chemins
+paths:
+  data_root: "data"
+  templates_dir: "templates"
+  visits_dir: "visits"
+  logs_dir: "logs"
+  config_dir: "config"
+
+# Traitement
+processing:
+  default_template: "ctqc_base"  # ✅ SIMPLIFICATION : Template unique
+  strict_validation: false
+  dry_run: false
+  workers: 0
+  batch_size: 10
+  max_file_size_mb: 50
+
+# Templates - SIMPLIFIÉ
+templates:
+  directory: "templates"
+  auto_detection: false  # ✅ SIMPLIFICATION : Plus de détection automatique
+  fallback_template: "ctqc_base"
+  validation_strict: false
+
+# Exports
+exports:
+  parquet_enabled: true
+  access_enabled: true
+  audit_enabled: true
+  visits_archive: true
+
+# Stockage
+storage:
+  hdf5_path: "data/operational/CTdb.hdf"
+  visits_archive: "visits/processed"
+  atomic_writes: true
+  compression: "zlib"
+  complevel: 9
+
+# Parquet
+parquet:
+  compression: "ZSTD"
+  row_group_size: 100000
+  partitioning:
+    - "year"
+    - "hospital"
+    - "system"
+
+# Access
+access:
+  delimiter: ","
+  encoding: "utf-8"
+  quote_all: true
+
+# Logging
+logging:
+  console_level: "INFO"
+  file_level: "DEBUG"
+  log_dir: "logs"
+  max_file_size: 10485760
+  backup_count: 5
+
+# Moteur d'extraction
+engine:
+  extraction:
+    max_sheets: 50
+    max_rows_per_sheet: 10000
+    timeout_seconds: 300
+    read_only: true
+    data_only: true
+  validation:
+    strict_mode: false
+    log_warnings: true
+  normalization:
+    trim_strings: true
+    case_sensitive: false
+
+# Audit
+audit:
+  enabled: true
+  export_formats:
+    - "hdf5"
+    - "parquet"
+    - "txt"
+  retention_days: 30

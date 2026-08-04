@@ -1,0 +1,1744 @@
+# (généré pour le projet CT-QC)
+# VERSION CORRIGÉE — corrections appliquées le 2026-05-16
+
+workbook:
+  version: "6.8"
+  description: "Extraction semi-automatique des résultats QA CT vers base de données CT-QC"
+
+sheets:
+
+  algemene_informatie:
+    sheet_name: "Algemene Informatie"
+    sections:
+
+      qa_visit:
+        db_table: "meta/qa_visit"
+        date_test:        { row: 2,  col: "B", dtype: date,
+                            note: "Format Excel date serial → parser.to_date()" }
+        reference_QC:     { row: 2,  col: "E", dtype: string,
+                            note: "Ex: 'QC300_0624_01504CT-CT11' — clé unique visite" }
+        erkenningsnummer: { row: 2,  col: "H", dtype: string, optional: true }
+        type_test:        { row: 4,  col: "B", dtype: string,
+                            note: "'Jaarlijkse test' ou 'Halfjaarlijkse test'" }
+        referentie_norm:  { row: 4,  col: "E", dtype: string,
+                            note: "Ex: '017-000258-5' (référence KB/AR)" }
+        physiciens:
+          header_row: null
+          data_start_row: 3
+          data_end_row: 8
+          col_nom:   "G"
+          col_riziv: "H"
+          dtype: list_of_dict
+          note: >
+            Nombre variable de physiciens (1 à 6).
+            Arrêter à la première ligne vide en col G.
+
+      scanner:
+        db_table: "meta/scanner"
+        note: >
+          Bloc gauche = centre hospitalier (cols A–B).
+          Bloc droit  = caractéristiques CT (cols D–E).
+          Le numéro de série (row 14 col E) est la clé naturelle du scanner.
+        naam_centrum:      { row: 10, col: "B", dtype: string }
+        centrum_nummer:    { row: 11, col: "B", dtype: int,
+                             note: "Ex: 300 (UZ Leuven)" }
+        dienst:            { row: 12, col: "B", dtype: string }
+        verantwoordelijke: { row: 13, col: "B", dtype: string }
+        zaalnummer:        { row: 14, col: "B", dtype: string,
+                             note: "Ex: 'Zaal 11'" }
+        adres:             { row: 15, col: "B", dtype: string, optional: true }
+        postcode:          { row: 17, col: "B", dtype: string, optional: true }
+        gemeente:          { row: 18, col: "B", dtype: string, optional: true }
+        modaliteit:        { row: 10, col: "E", dtype: string }
+        type_toestel:      { row: 11, col: "E", dtype: string }
+        merk:              { row: 12, col: "E", dtype: string,
+                             note: "'Siemens', 'Philips', 'GE', 'Canon'..." }
+        model:             { row: 13, col: "E", dtype: string,
+                             note: "Ex: 'Somatom Force'" }
+        serienummer:       { row: 14, col: "E", dtype: string,
+                             note: "Clé naturelle scanner — peut être vide!" }
+        fabricatiedatum:   { row: 15, col: "E", dtype: int,
+                             note: "Année uniquement (ex: 2015) — pas une date complète" }
+        installatiedatum:  { row: 16, col: "E", dtype: date,
+                             note: "Date complète — format Excel serial" }
+        software_versie:   { row: 17, col: "E", dtype: string, optional: true }
+
+      tube_detector:
+        db_table: "meta/scanner"
+        note: "Extension de meta/scanner — même clé primaire (serienummer)"
+        model_buis:          { row: 22, col: "B", dtype: string,
+                               note: "Ex: 'Vectron 1041'" }
+        serienummer_buis:    { row: 23, col: "B", dtype: string, optional: true }
+        fabricatie_buis:     { row: 24, col: "B", dtype: int,    optional: true }
+        installatie_buis:    { row: 25, col: "B", dtype: date,   optional: true }
+        aantal_slices:       { row: 21, col: "E", dtype: int,
+                               note: "Ex: 192" }
+        naam_IR:             { row: 23, col: "E", dtype: string,
+                               note: "Nom algorithme IR ex: 'ADMIRE', 'iDose', 'SAFIRE'" }
+        dual_energy:         { row: 24, col: "E", dtype: bool,
+                               bool_map: { "ja": true, "nee": false } }
+        CTDI_aanduiding:     { row: 28, col: "E", dtype: string,
+                               note: "'CTDI vol' ou 'DLP'" }
+        buismodulatie:       { row: 29, col: "E", dtype: string,
+                               note: "Ex: 'CareDose', 'DoseRight', 'Auto mA'" }
+        organ_based:         { row: 30, col: "E", dtype: bool,
+                               bool_map: { "ja": true, "nee": false }, optional: true }
+        care_kV:             { row: 31, col: "E", dtype: bool,
+                               bool_map: { "ja": true, "nee": false }, optional: true }
+        model_detector:      { row: 29, col: "B", dtype: string,
+                               note: "Ex: 'Stellar Infinity'" }
+        serienummer_det:     { row: 30, col: "B", dtype: string, optional: true }
+
+      aanvaardbaarheid:
+        db_table: "meta/qa_visit"
+        traceability_only: true
+        note: >
+          Résultats globaux pass/fail (lignes 40–46).
+          Col E = résultat scanner principal, col G = scanner 2 / dual source.
+          Col H = flag 'Buiten dienst'.
+        CTDI_pass:          { row: 40, col: "E", dtype: string }
+        CTDI_pass_b:        { row: 40, col: "G", dtype: string, optional: true }
+        buiten_dienst_40:   { row: 40, col: "H", dtype: string, optional: true }
+        dosisrapport_pass:  { row: 43, col: "E", dtype: string, optional: true }
+        autoexp_pass:       { row: 45, col: "E", dtype: string, optional: true }
+        scanner2_pass:      { row: 46, col: "E", dtype: string, optional: true }
+
+  # ── MATERIAAL ───────────────────────────────────────────────────────────────
+  materiaal:
+    sheet_name: "Materiaal"
+    traceability_only: true
+    note: >
+      Aucune mesure QC. Traçabilité métrologique uniquement.
+      Lier à qa_visit via reference_QC (clé étrangère).
+    sections:
+
+      dosimeters:
+        db_table: "meta/measurement_equipment"
+        note: >
+          Tableau des 4 Piranha (côté droit, cols I–N, lignes 4–7).
+          Col I = label, J = numéro, K = merk, L = SN R100,
+          M = SN T20, N = date kalibratie.
+        header_row: 3
+        data_start_row: 4
+        data_end_row: 7
+        columns:
+          label:            { col: "I", dtype: string }
+          numero:           { col: "J", dtype: int }
+          merk:             { col: "K", dtype: string }
+          SN_R100:          { col: "L", dtype: string }
+          SN_T20:           { col: "M", dtype: string }
+          datum_kalibratie: { col: "N", dtype: date }
+
+      dosimeter_actif:
+        db_table: "meta/measurement_equipment"
+        note: "Piranha utilisé lors de cette visite (côté gauche, col C, lignes 4–9)."
+        dose_probe_model: { row: 4, col: "C", dtype: string,
+                            note: "Ex: 'RTI Piranha'" }
+        datum_kalibratie: { row: 5, col: "C", dtype: date }
+        SN_dose_probe:    { row: 6, col: "C", dtype: string,
+                            note: "Ex: 'R100 SN 1310'" }
+        SN_T20:           { row: 7, col: "C", dtype: string,
+                            note: "Ex: 'T20 SN 17050'" }
+        software:         { row: 8, col: "C", dtype: string,
+                            note: "Ex: 'Ocean 2014'" }
+        chamber_adapter:  { row: 9, col: "C", dtype: string, optional: true }
+
+      dct10:
+        db_table: "meta/measurement_equipment"
+        note: "Chambre DCT10 LEMO pour CTDI — ligne 10"
+        SN_DCT10: { row: 10, col: "C", dtype: string,
+                    note: "Ex: 'CTDI-1823'" }
+
+      fantomen:
+        db_table: "meta/phantoms"
+        note: "Lignes 11–16 : fantômes cylindriques et Catphan"
+        fantoom_32cm: { row: 11, col: "C", dtype: string }
+        fantoom_16cm: { row: 12, col: "C", dtype: string }
+        catphan_SN:   { row: 13, col: "C", dtype: string,
+                        note: "Ex: 'S/N 50462'" }
+        catphan_modules:
+          note: "Lignes 13–16 col D : modules présents (CTP404/528/515/486)"
+          data_start_row: 13
+          data_end_row: 16
+          col: "D"
+          dtype: list_of_string
+
+  # ── FYSISCHE CONTROLE ───────────────────────────────────────────────────────
+  fysische_controle:
+    sheet_name: "Fysische Controle"
+    extract: false
+    note: "Lettre de rapport texte — aucune donnée QC structurée."
+
+  # ── VERSLAG ─────────────────────────────────────────────────────────────────
+  verslag:
+    sheet_name: "Verslag"
+    extract: false
+    note: >
+      Flags booléens CB_* (col M–N) redondants avec pass/fail individuels.
+      Exception : datum_verslag peut différer de date_test.
+    datum_verslag_ref: { row: 13, col: "H", dtype: date,
+                         note: "Optionnel — ajouter dans meta/qa_visit si ≠ date_test",
+                         optional: true }
+
+  # ── BUISSPANNING-GEOMETRIE ──────────────────────────────────────────────────
+  buisspanning_geometrie:
+    sheet_name: "buisspanning-geometrie"
+    sections:
+
+      buisspanning_nauwkeurigheid:
+        anchor_text: "Buispanning: Nauwkeurigheid"
+        anchor_row: 3
+        header_row: 5
+        data_start_row: 6
+        end_condition: { type: empty_cell, row: 6, col: "B" }
+        db_table: "tube_voltage/accuracy"
+        columns:
+          kV_set:        { col: "B", dtype: string }
+          kV_measured:   { col: "C", dtype: float, locale_safe: true }
+          deviation_pct: { col: "D", dtype: float }
+          waveform:      { col: "F", dtype: string, optional: true }
+
+      buisspanning_reproduceerbaarheid:
+        header_row: 20
+        data_start_row: 21
+        end_row: 24
+        db_table: "tube_voltage/reproducibility"
+        columns:
+          kV_set:        { col: "B", dtype: string }
+          kV_measured:   { col: "C", dtype: float, locale_safe: true }
+          deviation_pct: { col: "D", dtype: float }
+
+      geometrische_efficientie:
+        anchor_text: "Geometrische efficiëntie"
+        anchor_row: 30
+        header_row: 32
+        data_start_row: 33
+        end_row: 38
+        db_table: "geometry/geometric_efficiency"
+        columns:
+          beam_type:         { col: "A", dtype: string }
+          collimation:       { col: "B", dtype: string }
+          nominal_scan_len:  { col: "C", dtype: float, unit: mm }
+          measured_scan_len: { col: "D", dtype: float, unit: mm }
+          efficiency:        { col: "E", dtype: float }
+          vendor_definition: { col: "O", dtype: string, optional: true }
+
+      positioneringslicht:
+        anchor_text: "Nauwkeurigheid van het positioneringslicht"
+        anchor_row: 39
+        header_row: 41
+        data_start_row: 42
+        end_row: 46
+        db_table: "geometry/positioning_light"
+        columns:
+          position:     { col: "B", dtype: string }
+          deviation_mm: { col: "D", dtype: float, unit: mm }
+
+      tafelweg:
+        anchor_text: "Afgelegde weg van de tafel"
+        anchor_row: 48
+        header_row: 50
+        data_start_row: 51
+        end_row: 54
+        db_table: "geometry/table_travel"
+        columns:
+          mode:         { col: "B", dtype: string }
+          deviation_mm: { col: "D", dtype: float, unit: mm }
+
+      # C3 CORRIGÉ : pitch et scanned_length_mm sortis de columns: → metadata:
+      overscannen:
+        anchor_text: "Overscannen"
+        anchor_row: 57
+        header_row: 59
+        data_start_row: 60
+        end_row: 66
+        db_table: "geometry/overscan"
+        metadata:
+          pitch:             { row: 60, col: "B", dtype: string,
+                               note: "Valeur de pitch — cellule unique hors tableau" }
+          scanned_length_mm: { row: 61, col: "D", dtype: float, unit: mm,
+                               note: "Longueur scannée mesurée — cellule unique" }
+        columns:
+          collimation: { col: "B", dtype: string }
+
+      increment:
+        anchor_text: "Increment"
+        anchor_row: 106
+        header_row: 108
+        data_start_row: 109
+        end_row: 120
+        db_table: "geometry/increment"
+        columns:
+          slice_thickness: { col: "D", dtype: float, unit: mm }
+          kernel_type:     { col: "C", dtype: string }
+          measured_step:   { col: "F", dtype: float, unit: mm }
+          deviation_mm:    { col: "G", dtype: float, unit: mm }
+          deviation_rel:   { col: "H", dtype: float }
+
+      pixelgrootte:
+        anchor_text: "Verificatie van pixelgrootte"
+        anchor_row: 122
+        header_row: 124
+        data_start_row: 125
+        end_row: 127
+        db_table: "geometry/pixel_size"
+        columns:
+          distance_top_mm: { col: "D", dtype: float, unit: mm }
+          limit_mm:        { col: "D", row: 127, dtype: float, unit: mm }
+
+      circulaire_symmetrie:
+        anchor_text: "Circulaire symmetrie"
+        anchor_row: 129
+        header_row: 131
+        data_start_row: 132
+        end_row: 134
+        db_table: "geometry/circular_symmetry"
+        columns:
+          diameter_x_mm: { col: "D", dtype: float, unit: mm }
+          diameter_y_mm: { col: "D", row: 132, dtype: float, unit: mm }
+
+  # ── CTDI 32cm ───────────────────────────────────────────────────────────────
+  ctdi_32cm:
+    sheet_name: "CTDI 32cm"
+    sections:
+
+      acquisition_params:
+        protocol:       { row: 2, col: "C", dtype: string }
+        kernel:         { row: 3, col: "C", dtype: string }
+        mAs:            { row: 4, col: "C", dtype: float, unit: mAs }
+        collimation:    { row: 5, col: "C", dtype: string }
+        collimation_cm: { row: 5, col: "G", dtype: float, unit: cm }
+        cycle_time_s:   { row: 6, col: "C", dtype: float, unit: s }
+        drecon_mm:      { row: 7, col: "C", dtype: float, unit: mm }
+        fov_mm:         { row: 8, col: "C", dtype: float, unit: mm }
+
+      reproducibility:
+        header_row: 20
+        data_start_row: 21
+        end_row: 24
+        db_table: "dose/CTDI32_reproducibility"
+        columns:
+          dose_centre_mGy: { col: "C", dtype: float, unit: mGy }
+          deviation_prev:  { col: "D", dtype: float }
+
+      ctdi_kV_table:
+        header_row: 32
+        data_start_row: 33
+        end_row: 41
+        db_table: "dose/CTDI32_kV"
+        columns:
+          kV:                 { col: "A", dtype: float, unit: kV }
+          dose_centre_mGy:    { col: "B", dtype: float, unit: mGy }
+          dose_top_mGy:       { col: "C", dtype: float, unit: mGy }
+          dose_right_mGy:     { col: "D", dtype: float, unit: mGy }
+          dose_bottom_mGy:    { col: "E", dtype: float, unit: mGy }
+          dose_left_mGy:      { col: "F", dtype: float, unit: mGy }
+          dose_mean_mGy:      { col: "G", dtype: float, unit: mGy }
+          ctdiw_mGy:          { col: "H", dtype: float, unit: mGy }
+          ctdi_indicated_mGy: { col: "I", dtype: float, unit: mGy }
+
+      ctdi_kV_deviation:
+        header_row: 45
+        data_start_row: 46
+        end_row: 54
+        db_table: "dose/CTDI32_kV_deviation"
+        columns:
+          kV:             { col: "A", dtype: float, unit: kV }
+          deviation_pct:  { col: "B", dtype: float }
+          limit_pct:      { col: "C", dtype: float }
+          pass_fail:      { col: "D", dtype: string }
+          kV_B:            { col: "F", dtype: float, unit: kV, optional: true }
+          deviation_pct_B: { col: "G", dtype: float, optional: true }
+          pass_fail_B:     { col: "I", dtype: string, optional: true }
+          # Critère 35% étendu (BHPA)
+          deviation_35pct: { col: "M", dtype: float, optional: true }
+          limit_35pct:     { col: "N", dtype: float, optional: true }
+          pass_fail_35pct: { col: "O", dtype: string, optional: true }
+
+      ctdi_collimation:
+        header_row: 58
+        data_start_row: 59
+        end_row: 61
+        db_table: "dose/CTDI32_collimation"
+        columns:
+          collimation:        { col: "B", dtype: string }
+          dose_centre_mGy:    { col: "C", dtype: float, unit: mGy }
+          dose_top_mGy:       { col: "D", dtype: float, unit: mGy }
+          dose_right_mGy:     { col: "E", dtype: float, unit: mGy }
+          dose_bottom_mGy:    { col: "F", dtype: float, unit: mGy }
+          dose_left_mGy:      { col: "G", dtype: float, unit: mGy }
+          dose_mean_mGy:      { col: "H", dtype: float, unit: mGy }
+          ctdiw_mGy:          { col: "I", dtype: float, unit: mGy }
+
+      ctdi_linearity:
+        header_row: 72
+        data_start_row: 73
+        end_row: 76
+        db_table: "dose/CTDI32_linearity"
+        columns:
+          kV:                 { col: "A", dtype: float, unit: kV }
+          eff_mAs:            { col: "C", dtype: float, unit: mAs }
+          slice_thickness_mm: { col: "D", dtype: float, unit: mm }
+          dose_centre_mGy:    { col: "E", dtype: float, unit: mGy }
+          ctdi_indicated_mGy: { col: "F", dtype: float, unit: mGy }
+          signal_HU:          { col: "H", dtype: float, unit: HU }
+          noise_SD:           { col: "I", dtype: float, unit: HU }
+          SNR:                { col: "J", dtype: float }
+
+      ctdi_linearity_iterative:
+        header_row: 78
+        data_start_row: 79
+        end_row: 82
+        db_table: "dose/CTDI32_linearity_iterative"
+        skip_if_value: "NGEMETEN"
+        skip_col: "E"
+        columns:
+          kV:                 { col: "A", dtype: float, unit: kV }
+          eff_mAs:            { col: "C", dtype: float, unit: mAs }
+          slice_thickness_mm: { col: "D", dtype: float, unit: mm }
+          dose_centre_mGy:    { col: "E", dtype: float, unit: mGy }
+          ctdi_indicated_mGy: { col: "F", dtype: float, unit: mGy }
+          signal_HU:          { col: "H", dtype: float, unit: HU }
+          noise_SD:           { col: "I", dtype: float, unit: HU }
+          SNR:                { col: "J", dtype: float }
+
+      ctdi_verification_standard:
+        anchor_text: "CTDI: Verificatie"
+        anchor_row: 101
+        db_table: "dose/CTDI32_verification_standard"
+        acquisition_params:
+          protocol: { row: 102, col: "C", dtype: string }
+          pitch:    { row: 102, col: "G", dtype: float }
+        header_row: 104
+        data_start_row: 105
+        end_row: 105
+        columns:
+          dose_centre_mGy:    { col: "B", dtype: float, unit: mGy }
+          dose_top_mGy:       { col: "C", dtype: float, unit: mGy }
+          dose_right_mGy:     { col: "D", dtype: float, unit: mGy }
+          dose_bottom_mGy:    { col: "E", dtype: float, unit: mGy }
+          dose_left_mGy:      { col: "F", dtype: float, unit: mGy }
+          dose_mean_mGy:      { col: "G", dtype: float, unit: mGy }
+          ctdiw_mGy:          { col: "H", dtype: float, unit: mGy }
+          ctdi_indicated_mGy: { col: "I", dtype: float, unit: mGy }
+        deviation_row: 108
+        deviation_cols:
+          deviation_pct: { col: "B", dtype: float }
+          limit_pct:     { col: "C", dtype: float }
+          pass_fail:     { col: "D", dtype: string }
+
+      ctdi_verification_dual_source:
+        anchor_text: "CTDI: Verificatie"
+        anchor_row: 111
+        db_table: "dose/CTDI32_verification_DS"
+        acquisition_params:
+          protocol:  { row: 112, col: "C", dtype: string }
+          kV_tubeA:  { row: 113, col: "C", dtype: string }
+          mAs_tubeA: { row: 114, col: "C", dtype: float, unit: mAs }
+          kV_tubeB:  { row: 113, col: "G", dtype: string,
+                       note: "Peut contenir 'Sn150' — dtype string obligatoire" }
+          mAs_tubeB: { row: 114, col: "G", dtype: float, unit: mAs }
+        header_row: 116
+        data_start_row: 117
+        end_row: 117
+        columns:
+          dose_centre_mGy:    { col: "B", dtype: float, unit: mGy }
+          dose_top_mGy:       { col: "C", dtype: float, unit: mGy }
+          dose_right_mGy:     { col: "D", dtype: float, unit: mGy }
+          dose_bottom_mGy:    { col: "E", dtype: float, unit: mGy }
+          dose_left_mGy:      { col: "F", dtype: float, unit: mGy }
+          dose_mean_mGy:      { col: "G", dtype: float, unit: mGy }
+          ctdiw_mGy:          { col: "H", dtype: float, unit: mGy }
+          ctdi_indicated_mGy: { col: "I", dtype: float, unit: mGy }
+        deviation_row: 120
+        deviation_cols:
+          deviation_pct: { col: "B", dtype: float }
+          limit_pct:     { col: "C", dtype: float }
+          pass_fail:     { col: "D", dtype: string }
+
+  # ── RUIS DETECTORRIJ ────────────────────────────────────────────────────────
+  ruis_detectorrij:
+    sheet_name: "Ruis Detectorrij"
+    sections:
+
+      acquisition_params:
+        scan_type:   { row: 2,  col: "A", dtype: string }
+        protocol:    { row: 3,  col: "D", dtype: string }
+        kV_ref:      { row: 4,  col: "D", dtype: float, unit: kV }
+        mAs:         { row: 5,  col: "D", dtype: float, unit: mAs }
+        collimation: { row: 6,  col: "D", dtype: string }
+        drecon_mm:   { row: 7,  col: "D", dtype: float, unit: mm }
+        fov_mm:      { row: 8,  col: "D", dtype: float, unit: mm }
+        kernel_soft: { row: 10, col: "D", dtype: string }
+
+      detector_rows:
+        header_row: 3
+        data_start_row: 4
+        end_condition: { type: empty_col, col: "K" }
+        db_table: "noise/detector_row"
+        columns:
+          slice_number: { col: "K", dtype: int }
+          tube_current: { col: "L", dtype: float, unit: mA }
+          exposure_mAs: { col: "M", dtype: float, unit: mAs }
+          mean_HU:      { col: "N", dtype: float, unit: HU }
+          stddev_HU:    { col: "O", dtype: float, unit: HU }
+
+      limits:
+        angle_0_lower:  { row: 3, col: "R", dtype: float }
+        angle_0_upper:  { row: 3, col: "S", dtype: float }
+        angle_90_lower: { row: 4, col: "R", dtype: float }
+        angle_90_upper: { row: 4, col: "S", dtype: float }
+
+  # ── BUISSTROOMMODULATIE ─────────────────────────────────────────────────────
+  buisstroommodulatie:
+    sheet_name: "Buisstroommodulatie"
+    sections:
+
+      setup_metadata:
+        phantom_32cm: { row: 3, col: "B", dtype: string }
+        phantom_16cm: { row: 3, col: "G", dtype: string }
+
+      z_dikte_tcm_aan:
+        db_table: "tcm/z_dikte_tcm_aan"
+        metadata:
+          label:         { row: 15, col: "T", dtype: string }
+          tcm_state:     { row: 16, col: "T", dtype: string }
+          encoded_params:
+            row: 17
+            col: "S"
+            dtype: string
+            note: >
+              Cellule unique encodant kVp/mAs/slice/kernel.
+              Format: "Buismodulatie kVp: 120 mAs: 218 slice: 3 Br40d"
+              Parser regex: kVp:\s*(\d+)\s+mAs:\s*(\d+)\s+slice:\s*([\d.]+)\s+(\S+)
+        header_row: 18
+        data_start_row: 19
+        end_condition: { type: empty_col, col: "S" }
+        columns:
+          tube_current_mA: { col: "S", dtype: float, unit: mA }
+          exposure_mAs:    { col: "T", dtype: float, unit: mAs }
+          mean_HU:         { col: "U", dtype: float, unit: HU }
+          stddev_HU:       { col: "V", dtype: float, unit: HU }
+
+      z_dikte_tcm_af:
+        db_table: "tcm/z_dikte_tcm_af"
+        metadata:
+          tcm_state:      { row: 16, col: "X", dtype: string }
+          encoded_params:
+            row: 17
+            col: "W"
+            dtype: string
+            note: "Parser regex identique à z_dikte_tcm_aan"
+        header_row: 18
+        data_start_row: 19
+        end_condition: { type: empty_col, col: "W" }
+        columns:
+          tube_current_mA: { col: "W", dtype: float, unit: mA }
+          exposure_mAs:    { col: "X", dtype: float, unit: mAs }
+          mean_HU:         { col: "Y", dtype: float, unit: HU }
+          stddev_HU:       { col: "Z", dtype: float, unit: HU }
+
+      z_densiteit_tcm_aan:
+        db_table: "tcm/z_densiteit_tcm_aan"
+        metadata:
+          label:          { row: 15, col: "AC", dtype: string }
+          tcm_state:      { row: 16, col: "AC", dtype: string }
+          encoded_params:
+            row: 17
+            col: "AB"
+            dtype: string
+            note: "Parser regex identique à z_dikte_tcm_aan"
+        header_row: 18
+        data_start_row: 19
+        end_condition: { type: empty_col, col: "AB" }
+        columns:
+          tube_current_mA: { col: "AB", dtype: float, unit: mA }
+          exposure_mAs:    { col: "AC", dtype: float, unit: mAs }
+          mean_HU:         { col: "AD", dtype: float, unit: HU }
+          stddev_HU:       { col: "AE", dtype: float, unit: HU }
+
+      z_densiteit_tcm_af:
+        db_table: "tcm/z_densiteit_tcm_af"
+        metadata:
+          tcm_state:      { row: 16, col: "AG", dtype: string }
+          encoded_params:
+            row: 17
+            col: "AF"
+            dtype: string
+            note: "Parser regex identique à z_dikte_tcm_aan"
+        header_row: 18
+        data_start_row: 19
+        end_condition: { type: empty_col, col: "AH" }
+        columns:
+          tube_current_mA: { col: "AF", dtype: float, unit: mA }
+          exposure_mAs:    { col: "AG", dtype: float, unit: mAs }
+          mean_HU:         { col: "AH", dtype: float, unit: HU }
+          stddev_HU:       { col: "AI", dtype: float, unit: HU }
+
+      pass_fail_summary:
+        note: "Résultats pass/fail textuels"
+        bij_homogeen_z:  { row: 41, col: "D", dtype: string }
+        bij_inhomogeen:  { row: 45, col: "D", dtype: string }
+        bij_homogeen_xy: { row: 73, col: "D", dtype: string }
+
+  # ── CTDI 16cm ───────────────────────────────────────────────────────────────
+  ctdi_16cm:
+    sheet_name: "CTDI 16cm"
+    note: >
+      Onglet simplifié : seuls les paramètres d'acquisition et le tableau CTDI vs kV
+      sont extraits (aligné sur l'approche de Kwinten Torfs 2022).
+      Les sections de déviation, collimation, linéarité et vérification
+      présentes dans CTDI 32cm ne figurent pas dans cet onglet.
+    sections:
+
+      acquisition_params:
+        db_table: "dose/CTDI16_settings"
+        protocol:         { row: 2,  col: "C", dtype: string }
+        kernel:           { row: 3,  col: "C", dtype: string }
+        mAs:              { row: 4,  col: "C", dtype: float, unit: mAs }
+        collimation:      { row: 5,  col: "C", dtype: string }
+        cycle_time_s:     { row: 6,  col: "C", dtype: float, unit: s }
+        snededikte_mm:    { row: 7,  col: "C", dtype: float, unit: mm }
+        fov_mm:           { row: 8,  col: "C", dtype: float, unit: mm }
+        positie_fantoom:  { row: 9,  col: "C", dtype: string,
+                            note: "Ex: 'hoofdsteun' — spécifique au fantôme 16cm" }
+
+      ctdi_kV_table:
+        header_row: 12
+        data_start_row: 13
+        end_row: 22
+        db_table: "dose/CTDI16_kV"
+        note: >
+          Tableau CTDI en fonction du kV.
+          Col J = basiswaarde (mGy) — valeur de référence historique établie
+          lors de la première visite; utilisée pour le suivi longitudinal.
+        columns:
+          kV:                 { col: "A", dtype: float, unit: kV }
+          dose_centre_mGy:    { col: "B", dtype: float, unit: mGy }
+          dose_top_mGy:       { col: "C", dtype: float, unit: mGy }
+          dose_right_mGy:     { col: "D", dtype: float, unit: mGy }
+          dose_bottom_mGy:    { col: "E", dtype: float, unit: mGy }
+          dose_left_mGy:      { col: "F", dtype: float, unit: mGy }
+          dose_periph_mean_mGy: { col: "G", dtype: float, unit: mGy,
+                                  note: "Gemiddelde periferie" }
+          ctdi_berekend_mGy:  { col: "H", dtype: float, unit: mGy,
+                                note: "Berekende CTDI (mesurée)" }
+          ctdi_aangeduid_mGy: { col: "I", dtype: float, unit: mGy,
+                                note: "Aangeduide CTDI (indiquée par le scanner)" }
+          basiswaarde_mGy:    { col: "J", dtype: float, unit: mGy,
+                                note: "Valeur de référence — NaN si première visite" }
+
+  # ── BEELDKWALITEIT ──────────────────────────────────────────────────────────
+  beeldkwaliteit:
+    sheet_name: "Beeldkwaliteit"
+    inject_columns:
+      recon_type: "FBP"
+      source_type: "single_source"
+    is_dual_source: false
+    is_iterative: false
+    extract: true
+
+    referentieopname:                       # lignes 3–15 col C/D
+      patient_name:    { row: 4,  col: "D", dtype: string }
+      protocol:        { row: 6,  col: "D", dtype: string }
+      ref_kVp:         { row: 7,  col: "D", dtype: int,    unit: kV }
+      eff_mAs:         { row: 8,  col: "D", dtype: float,  unit: mAs }
+      collimatie:      { row: 9,  col: "D", dtype: string }
+      rotatietijd:     { row: 10, col: "D", dtype: float,  unit: s }
+      pitch:           { row: 11, col: "D", dtype: float }
+      slice_mm:        { row: 12, col: "D", dtype: float,  unit: mm }
+      CTDIvol:         { row: 13, col: "D", dtype: float,  unit: mGy }
+      FOV:             { row: 14, col: "D", dtype: int,    unit: mm }
+      scan_mode:       { row: 15, col: "D", dtype: string }   # "spiraal" ou "sequentieel"
+
+    referentiescan:                          # lignes 19–29, cols C/D + K/L/M/N/O
+      patient_name:    { row: 19, col: "D", dtype: string }
+      protocol:        { row: 20, col: "D", dtype: string }
+      ref_kVp:         { row: 21, col: "D", dtype: int }
+      eff_mAs:         { row: 22, col: "D", dtype: float }
+      collimatie:      { row: 23, col: "D", dtype: string }
+      rotatietijd:     { row: 24, col: "D", dtype: float }
+      pitch:           { row: 25, col: "D", dtype: float }
+      slice_mm:        { row: 26, col: "D", dtype: float }
+      CTDIvol:         { row: 27, col: "D", dtype: float }
+      FOV:             { row: 28, col: "D", dtype: int }
+      scan_mode:       { row: 29, col: "D", dtype: string }
+      kernel_soft:     { row: 31, col: "D", dtype: string }   # zacht weefsel
+      kernel_hard:     { row: 32, col: "D", dtype: string }   # bot weefsel
+      max_kVp:         { row: 31, col: "G", dtype: int }
+      min_kVp:         { row: 32, col: "G", dtype: int }
+      mAs_high:        { row: 31, col: "I", dtype: float }    # >120 mAs
+      mAs_low:         { row: 32, col: "I", dtype: float }    # <120 mAs
+      # Référence kernel (col K) — table fixe dans la feuille
+      ref_kernel_table:
+        row: 24
+        cols: { K: label, L: siemens_soft, M: siemens_hard, N: philips, O: toshiba, P: GE }
+
+    controle_RDS:                            # ligne 19 col N/O
+      DLP_mGycm:       { row: 20, col: "O", dtype: float }
+      CTDIvol_mGy:     { row: 21, col: "O", dtype: float }
+
+    localisatie:                             # section A34, cols C–E
+      filter:          { row: 35, col: "D", dtype: string }
+      kV:              { row: 36, col: "D", dtype: int }
+      afwijking_mm:    { row: 40, col: "D", dtype: float }
+      limiet_mm:       { row: 41, col: "D", dtype: float }
+      pass_fail:       { row: 42, col: "D", dtype: string }
+
+
+    CT_nummer_ruis_in_tijd:
+      note: >
+        "CT nummer & Ruis in de tijd" — test longitudinal de stabilité HU et bruit.
+        Ce bloc était incorrectement nommé "uniformiteit" dans la version précédente.
+      filter:           { row: 45, col: "D", dtype: string }
+      kV:               { row: 46, col: "D", dtype: int }
+      ROI_centraal_HU:  { row: 49, col: "D", dtype: float, unit: HU }
+      ROI_centraal_SD:  { row: 49, col: "E", dtype: float }
+      basiswaarde_HU:   { row: 50, col: "D", dtype: float, unit: HU }
+      basiswaarde_SD:   { row: 50, col: "E", dtype: float }
+      afwijking_HU:     { row: 51, col: "D", dtype: float }
+      afwijking_SD:     { row: 51, col: "E", dtype: float }
+      limiet_HU:        { row: 52, col: "D", dtype: float }
+      limiet_SD:        { row: 52, col: "E", dtype: float }
+      pass_fail_HU:     { row: 53, col: "D", dtype: string }
+      pass_fail_SD:     { row: 53, col: "E", dtype: string }
+      longitudinal:
+        header_row: 45
+        data_start_row: 46
+        end_condition:
+          type: label_row
+          label: "Gemiddelde:"
+          col: "G"
+        columns:
+          datum:    { col: "G", dtype: datetime }
+          HU:       { col: "H", dtype: float }
+          SD:       { col: "I", dtype: float }
+
+
+    uniformiteit:
+      note: >
+        Section "Uniformiteit" réelle — rows 215+.
+        Table principale : 6 filtres×kVp, 2 lignes par entrée (HU et SD).
+        Cols : A=filter_kV_label, B=row_type(HU/SD),
+        C=ROI_centraal, D=ROI_boven, E=ROI_rechts, F=ROI_onder, G=ROI_links,
+        H=Gemiddelde, I=Max_Uniformiteit_HU, J=Max_Uniformiteit_pct.
+      main_table:
+        db_table: "iq__uniformiteit_main"
+        header_row: 219
+        data_start_row: 220
+        end_condition:
+          type: n_rows
+          n: 12
+        columns:
+          filter_kV_label:
+            col: "A"
+            dtype: string
+          row_type:
+            col: "B"
+            dtype: string
+          ROI_centraal:
+            col: "C"
+            dtype: float
+            unit: HU
+          ROI_boven:
+            col: "D"
+            dtype: float
+            unit: HU
+          ROI_rechts:
+            col: "E"
+            dtype: float
+            unit: HU
+          ROI_onder:
+            col: "F"
+            dtype: float
+            unit: HU
+          ROI_links:
+            col: "G"
+            dtype: float
+            unit: HU
+          gemiddelde:
+            col: "H"
+            dtype: float
+            unit: HU
+          max_uniformiteit_HU:
+            col: "I"
+            dtype: float
+          max_uniformiteit_pct:
+            col: "J"
+            dtype: float
+      summary_table:
+        header_row: 233
+        data_start_row: 234
+        end_condition:
+          type: n_rows
+          n: 6
+        columns:
+          filter_kV_label:
+            col: "A"
+            dtype: string
+          max_uniformiteit:
+            col: "B"
+            dtype: float
+          limiet_HU:
+            col: "C"
+            dtype: float
+          pass_fail:
+            col: "D"
+            dtype: string
+      named_results:
+        UNIF120SoftFBP:
+          row: 223
+          col: "W"
+          dtype: string
+        UNIF120HardFBP:
+          row: 229
+          col: "W"
+          dtype: string
+    hoog_contrast_lp:                        # section A55, lignes 57–61 — # lijnparen zichtbaar
+      filter_soft:     { row: 57, col: "E", dtype: string }
+      filter_hard:     { row: 57, col: "F", dtype: string }
+      kV_soft:         { row: 58, col: "E", dtype: int }
+      kV_hard:         { row: 58, col: "F", dtype: int }
+      lp_soft:         { row: 59, col: "E", dtype: int }     # # zichtbare lijnparen
+      lp_hard:         { row: 59, col: "F", dtype: int }
+      basiswaarde_soft: { row: 60, col: "E", dtype: int }
+      basiswaarde_hard: { row: 60, col: "F", dtype: int }
+      afwijking_soft:  { row: 61, col: "E", dtype: float }
+      afwijking_hard:  { row: 61, col: "F", dtype: float }
+
+    hoog_contrast_fwhm:                      # section A64, FWHM pointspread
+      filter:          { row: 65, col: "D", dtype: string }
+      kV:              { row: 66, col: "D", dtype: int }
+      FWHM_x:          { row: 68, col: "E", dtype: float }
+      FWHM_y:          { row: 72, col: "E", dtype: float }   # TODO: vérifier ligne exacte y
+      basiswaarde_x:   { row: 69, col: "E", dtype: float }
+      basiswaarde_y:   { row: 73, col: "E", dtype: float }
+      afwijking_x:     { row: 70, col: "E", dtype: float }
+      afwijking_y:     { row: 74, col: "E", dtype: float }
+      longitudinal:
+        header_row: 66
+        data_start_row: 67
+        end_condition: { type: label_row, label: "Gemiddelde:", col: "G" }
+        columns:
+          datum:   { col: "G", dtype: datetime }
+          FWHM_x:  { col: "H", dtype: float }
+          FWHM_y:  { col: "I", dtype: float }
+
+    MTF:                                     # section A77/K87, lignes 88+
+      kV:              { row: 78, col: "D", dtype: int }
+      # Table MTF (K/L/M = soft lp, N/O/P = hard lp)
+      mtf_table_soft:
+        db_table: "iq__mtf_soft"
+        header_row: 88
+        data_start_row: 90
+        end_condition: { type: empty_col, col: "K" }
+        columns:
+          lp_per_mm: { col: "K", dtype: float }
+          MTF_x:     { col: "L", dtype: float }
+          MTF_y:     { col: "M", dtype: float }
+      mtf_table_hard:
+        db_table: "iq__mtf_hard"
+        header_row: 88
+        data_start_row: 90
+        end_condition: { type: empty_col, col: "N" }
+        columns:
+          lp_per_mm: { col: "N", dtype: float }
+          MTF_x:     { col: "O", dtype: float }
+          MTF_y:     { col: "P", dtype: float }
+      # Résultats nommés (col AG/AH) :
+      MTF120SoftFBP: { row: 100, col: "AG", dtype: string }
+      MTF120HardFBP: { row: 100, col: "AH", dtype: string }
+
+    CT_getal_lineair:                        # section A96/K96
+      db_table: "iq__CT_getal_lineair"
+      # Données tabulaires — 6 lignes (2 kVp × 3 filtres) à partir de la ligne 99
+      header_row: 99
+      data_start_row: 100
+      end_condition: { type: n_rows, n: 6 }
+      columns:
+        filter:       { col: "A", dtype: string }
+        Lucht:        { col: "C", dtype: float, unit: HU }
+        PMP:          { col: "D", dtype: float, unit: HU }
+        LDPE:         { col: "E", dtype: float, unit: HU }
+        Water:        { col: "F", dtype: float, unit: HU }
+        Polystyreen:  { col: "G", dtype: float, unit: HU }
+        Acrylic:      { col: "H", dtype: float, unit: HU }
+        Delrin:       { col: "I", dtype: float, unit: HU }
+        Teflon:       { col: "J", dtype: float, unit: HU }
+      correlatie:
+        db_table: "iq__correlatie"
+        # Lignes 127–132 : Correlatieco + limiet + pass/fail
+        header_row: 126
+        data_start_row: 127
+        end_condition: { type: n_rows, n: 6 }
+        columns:
+          filter:        { col: "A", dtype: string }
+          correlatie_r:  { col: "D", dtype: float }
+          limiet:        { col: "F", dtype: string }
+          pass_fail:     { col: "G", dtype: string }
+      # Résultats nommés (col AG):
+      HU120SoftFBP:  { row: 100, col: "AG", dtype: string }
+      HU120HardFBP:  { row: 101, col: "AG", dtype: string }
+      HU140SoftFBP:  { row: 102, col: "AG", dtype: string }
+      HU140HardFBP:  { row: 103, col: "AG", dtype: string }
+      HU100SoftFBP:  { row: 104, col: "AG", dtype: string }
+      HU100HardFBP:  { row: 105, col: "AG", dtype: string }
+
+  # ── BEELDKWALITEIT_ITERATIEF ────────────────────────────────────────────────
+  beeldkwaliteit_iteratief:
+    sheet_name: "Beeldkwaliteit_Iteratief"
+    inject_columns:
+      recon_type: "iterative"
+      source_type: "single_source"
+    is_dual_source: false
+    is_iterative: true
+    extract: true
+    note: >
+      Structure identique à beeldkwaliteit.
+      Différences mineures : kernel noté "Br40\3"/"Br59\3",
+      row 30 contient kV (col G) et mAs (col I) en plus.
+    referentieopname:
+      patient_name:    { row: 4,  col: "D", dtype: string }
+      protocol:        { row: 6,  col: "D", dtype: string }
+      ref_kVp:         { row: 7,  col: "D", dtype: int,    unit: kV }
+      eff_mAs:         { row: 8,  col: "D", dtype: float,  unit: mAs }
+      collimatie:      { row: 9,  col: "D", dtype: string }
+      rotatietijd:     { row: 10, col: "D", dtype: float,  unit: s }
+      pitch:           { row: 11, col: "D", dtype: float }
+      slice_mm:        { row: 12, col: "D", dtype: float,  unit: mm }
+      CTDIvol:         { row: 13, col: "D", dtype: float,  unit: mGy }
+      FOV:             { row: 14, col: "D", dtype: int,    unit: mm }
+      scan_mode:       { row: 15, col: "D", dtype: string }
+    referentiescan:
+      patient_name:    { row: 19, col: "D", dtype: string }
+      protocol:        { row: 20, col: "D", dtype: string }
+      ref_kVp:         { row: 21, col: "D", dtype: int }
+      eff_mAs:         { row: 22, col: "D", dtype: float }
+      collimatie:      { row: 23, col: "D", dtype: string }
+      rotatietijd:     { row: 24, col: "D", dtype: float }
+      pitch:           { row: 25, col: "D", dtype: float }
+      slice_mm:        { row: 26, col: "D", dtype: float }
+      CTDIvol:         { row: 27, col: "D", dtype: float }
+      FOV:             { row: 28, col: "D", dtype: int }
+      scan_mode:       { row: 29, col: "D", dtype: string }
+      kV_actual:       { row: 30, col: "G", dtype: int }
+      mAs_actual:      { row: 30, col: "I", dtype: float }
+      kernel_soft:     { row: 31, col: "D", dtype: string }
+      kernel_hard:     { row: 32, col: "D", dtype: string }
+      max_kVp:         { row: 31, col: "G", dtype: int }
+      min_kVp:         { row: 32, col: "G", dtype: int }
+      mAs_high:        { row: 31, col: "I", dtype: float }
+      mAs_low:         { row: 32, col: "I", dtype: float }
+    localisatie:
+      filter:          { row: 35, col: "D", dtype: string }
+      kV:              { row: 36, col: "D", dtype: int }
+      afwijking_mm:    { row: 40, col: "D", dtype: float }
+      limiet_mm:       { row: 41, col: "D", dtype: float }
+      pass_fail:       { row: 42, col: "D", dtype: string }
+
+    CT_nummer_ruis_in_tijd:
+      note: >
+        "CT nummer & Ruis in de tijd" — test longitudinal de stabilité HU et bruit.
+        Ce bloc était incorrectement nommé "uniformiteit" dans la version précédente.
+      filter:           { row: 45, col: "D", dtype: string }
+      kV:               { row: 46, col: "D", dtype: int }
+      ROI_centraal_HU:  { row: 49, col: "D", dtype: float, unit: HU }
+      ROI_centraal_SD:  { row: 49, col: "E", dtype: float }
+      basiswaarde_HU:   { row: 50, col: "D", dtype: float, unit: HU }
+      basiswaarde_SD:   { row: 50, col: "E", dtype: float }
+      afwijking_HU:     { row: 51, col: "D", dtype: float }
+      afwijking_SD:     { row: 51, col: "E", dtype: float }
+      limiet_HU:        { row: 52, col: "D", dtype: float }
+      limiet_SD:        { row: 52, col: "E", dtype: float }
+      pass_fail_HU:     { row: 53, col: "D", dtype: string }
+      pass_fail_SD:     { row: 53, col: "E", dtype: string }
+      longitudinal:
+        header_row: 45
+        data_start_row: 46
+        end_condition:
+          type: label_row
+          label: "Gemiddelde:"
+          col: "G"
+        columns:
+          datum:    { col: "G", dtype: datetime }
+          HU:       { col: "H", dtype: float }
+          SD:       { col: "I", dtype: float }
+
+
+    uniformiteit:
+      note: >
+        Section "Uniformiteit" réelle — rows 215+.
+        Table principale : 6 filtres×kVp, 2 lignes par entrée (HU et SD).
+        Cols : A=filter_kV_label, B=row_type(HU/SD),
+        C=ROI_centraal, D=ROI_boven, E=ROI_rechts, F=ROI_onder, G=ROI_links,
+        H=Gemiddelde, I=Max_Uniformiteit_HU, J=Max_Uniformiteit_pct.
+      main_table:
+        db_table: "iq__uniformiteit_main"
+        header_row: 219
+        data_start_row: 220
+        end_condition:
+          type: n_rows
+          n: 12
+        columns:
+          filter_kV_label:
+            col: "A"
+            dtype: string
+          row_type:
+            col: "B"
+            dtype: string
+          ROI_centraal:
+            col: "C"
+            dtype: float
+            unit: HU
+          ROI_boven:
+            col: "D"
+            dtype: float
+            unit: HU
+          ROI_rechts:
+            col: "E"
+            dtype: float
+            unit: HU
+          ROI_onder:
+            col: "F"
+            dtype: float
+            unit: HU
+          ROI_links:
+            col: "G"
+            dtype: float
+            unit: HU
+          gemiddelde:
+            col: "H"
+            dtype: float
+            unit: HU
+          max_uniformiteit_HU:
+            col: "I"
+            dtype: float
+          max_uniformiteit_pct:
+            col: "J"
+            dtype: float
+      summary_table:
+        header_row: 233
+        data_start_row: 234
+        end_condition:
+          type: n_rows
+          n: 6
+        columns:
+          filter_kV_label:
+            col: "A"
+            dtype: string
+          max_uniformiteit:
+            col: "B"
+            dtype: float
+          limiet_HU:
+            col: "C"
+            dtype: float
+          pass_fail:
+            col: "D"
+            dtype: string
+      named_results:
+        UNIF120SoftI:
+          row: 223
+          col: "W"
+          dtype: string
+        UNIF120HardI:
+          row: 229
+          col: "W"
+          dtype: string
+    hoog_contrast_lp:
+      filter_soft:     { row: 57, col: "E", dtype: string }
+      filter_hard:     { row: 57, col: "F", dtype: string }
+      kV_soft:         { row: 58, col: "E", dtype: int }
+      kV_hard:         { row: 58, col: "F", dtype: int }
+      lp_soft:         { row: 59, col: "E", dtype: int }
+      lp_hard:         { row: 59, col: "F", dtype: int }
+      basiswaarde_soft: { row: 60, col: "E", dtype: int }
+      basiswaarde_hard: { row: 60, col: "F", dtype: int }
+      afwijking_soft:  { row: 61, col: "E", dtype: float }
+      afwijking_hard:  { row: 61, col: "F", dtype: float }
+    hoog_contrast_fwhm:
+      filter:          { row: 65, col: "D", dtype: string }
+      kV:              { row: 66, col: "D", dtype: int }
+      FWHM_x:          { row: 68, col: "E", dtype: float }
+      FWHM_y:          { row: 72, col: "E", dtype: float }
+      basiswaarde_x:   { row: 69, col: "E", dtype: float }
+      basiswaarde_y:   { row: 73, col: "E", dtype: float }
+      afwijking_x:     { row: 70, col: "E", dtype: float }
+      afwijking_y:     { row: 74, col: "E", dtype: float }
+      longitudinal:
+        header_row: 66
+        data_start_row: 67
+        end_condition: { type: label_row, label: "Gemiddelde:", col: "G" }
+        columns:
+          datum:   { col: "G", dtype: datetime }
+          FWHM_x:  { col: "H", dtype: float }
+          FWHM_y:  { col: "I", dtype: float }
+    MTF:
+      kV:              { row: 78, col: "D", dtype: int }
+      mtf_table_soft:
+        db_table: "iq__mtf_soft"
+        header_row: 88
+        data_start_row: 90
+        end_condition: { type: empty_col, col: "K" }
+        columns:
+          lp_per_mm: { col: "K", dtype: float }
+          MTF_x:     { col: "L", dtype: float }
+          MTF_y:     { col: "M", dtype: float }
+      mtf_table_hard:
+        db_table: "iq__mtf_hard"
+        header_row: 88
+        data_start_row: 90
+        end_condition: { type: empty_col, col: "N" }
+        columns:
+          lp_per_mm: { col: "N", dtype: float }
+          MTF_x:     { col: "O", dtype: float }
+          MTF_y:     { col: "P", dtype: float }
+    CT_getal_lineair:
+      db_table: "iq__CT_getal_lineair"
+      header_row: 99
+      data_start_row: 100
+      end_condition: { type: n_rows, n: 6 }
+      columns:
+        filter:       { col: "A", dtype: string }
+        Lucht:        { col: "C", dtype: float, unit: HU }
+        PMP:          { col: "D", dtype: float, unit: HU }
+        LDPE:         { col: "E", dtype: float, unit: HU }
+        Water:        { col: "F", dtype: float, unit: HU }
+        Polystyreen:  { col: "G", dtype: float, unit: HU }
+        Acrylic:      { col: "H", dtype: float, unit: HU }
+        Delrin:       { col: "I", dtype: float, unit: HU }
+        Teflon:       { col: "J", dtype: float, unit: HU }
+      correlatie:
+        db_table: "iq__correlatie"
+        header_row: 126
+        data_start_row: 127
+        end_condition: { type: n_rows, n: 6 }
+        columns:
+          filter:        { col: "A", dtype: string }
+          correlatie_r:  { col: "D", dtype: float }
+          limiet:        { col: "F", dtype: string }
+          pass_fail:     { col: "G", dtype: string }
+      HU120SoftFBP:  { row: 100, col: "AG", dtype: string }
+      HU120HardFBP:  { row: 101, col: "AG", dtype: string }
+      HU140SoftFBP:  { row: 102, col: "AG", dtype: string }
+      HU140HardFBP:  { row: 103, col: "AG", dtype: string }
+      HU100SoftFBP:  { row: 104, col: "AG", dtype: string }
+      HU100HardFBP:  { row: 105, col: "AG", dtype: string }
+
+  # ── BEELDKWALITEIT_DS ───────────────────────────────────────────────────────
+  beeldkwaliteit_ds:
+    sheet_name: "Beeldkwaliteit_DS"
+    inject_columns:
+      recon_type: "FBP"
+      source_type: "dual_source"
+    is_dual_source: true
+    is_iterative: false
+
+    referentieopname:
+      note: "Paramètres de la scan de référence (fantôme Catphan, 120 kV)."
+      patient_name:   { row: 4,  col: "D", dtype: string }
+      protocol:       { row: 6,  col: "D", dtype: string }
+      ref_kVp:        { row: 7,  col: "D", dtype: int,    unit: kV }
+      eff_mAs:        { row: 8,  col: "D", dtype: float,  unit: mAs }
+      collimatie:     { row: 9,  col: "D", dtype: string }
+      rotatietijd_s:  { row: 10, col: "D", dtype: float,  unit: s }
+      pitch:          { row: 11, col: "D", dtype: float }
+      snededikte_mm:  { row: 12, col: "D", dtype: float,  unit: mm }
+      CTDIvol_mGy:    { row: 13, col: "D", dtype: float,  unit: mGy }
+      FOV_mm:         { row: 14, col: "D", dtype: int,    unit: mm }
+      scanmode:       { row: 15, col: "D", dtype: string }
+
+    referentiescan:
+      note: >
+        Paramètres de la scan QA effective (dual source : deux tubes).
+        Les kV et mAs sont encodés sous forme "tubeA / tubeB" (ex: "100 / Sn150", "177 / 98").
+        Les kV alternatifs (80/Sn150, 90/Sn150) et leurs mAs/CTDI sont en rows 31–32.
+      patient_name:   { row: 19, col: "D", dtype: string }
+      protocol:       { row: 20, col: "D", dtype: string }
+      ref_kVp:        { row: 21, col: "D", dtype: string,
+                        note: "Format 'tubeA / tubeB' ex: '100 / Sn150'" }
+      eff_mAs:        { row: 22, col: "D", dtype: string,
+                        note: "Format 'tubeA / tubeB' ex: '177 / 98'" }
+      collimatie:     { row: 23, col: "D", dtype: string }
+      rotatietijd_s:  { row: 24, col: "D", dtype: float,  unit: s }
+      pitch:          { row: 25, col: "D", dtype: float }
+      snededikte_mm:  { row: 26, col: "D", dtype: float,  unit: mm }
+      CTDIvol_mGy:    { row: 27, col: "D", dtype: float,  unit: mGy }
+      FOV_mm:         { row: 28, col: "D", dtype: int,    unit: mm }
+      scanmode:       { row: 29, col: "D", dtype: string }
+      kernel_soft:    { row: 31, col: "D", dtype: string,
+                        note: "Ex: 'Br40'" }
+      kernel_hard:    { row: 32, col: "D", dtype: string,
+                        note: "Ex: 'Br59'" }
+      alt_kV_low:     { row: 31, col: "G", dtype: string,
+                        note: "kV alternatif bas ex: '80 / Sn150'" }
+      alt_mAs_low:    { row: 31, col: "H", dtype: float,  unit: mAs }
+      alt_CTDI_low:   { row: 31, col: "I", dtype: float,  unit: mGy }
+      alt_kV_high:    { row: 32, col: "G", dtype: string,
+                        note: "kV alternatif haut ex: '90 / Sn150'" }
+      alt_mAs_high:   { row: 32, col: "H", dtype: float,  unit: mAs }
+      alt_CTDI_high:  { row: 32, col: "I", dtype: float,  unit: mGy }
+
+    CT_getal_lineair_mixed:
+      note: >
+        Sensitométrie sur image mixed (combinaison tubes A+B).
+        6 combinaisons filtre × kVp : Br40/Br59 × 100/Sn150, 80/Sn150, 90/Sn150.
+        Les HU mesurés (cols C–J) sont les données primaires à stocker.
+        Les cols K–S contiennent les données CodeImageJ (tube B référence) :
+          col K = label encodé "HU kVp: mAs: slice: kernel",
+          cols L–S = HU des 8 matériaux (même ordre que C–J).
+      db_table: "iq/DS_CT_getal_lineair_mixed"
+      header_row: 38
+      data_start_row: 39
+      end_condition:
+        type: n_rows
+        n: 6
+      columns:
+        filter_kV_label:  { col: "A", dtype: string,
+                            note: "Ex: 'Filter: Br40 - 100 / Sn150 kV'" }
+        HU_lucht:         { col: "C", dtype: float, unit: HU }
+        HU_PMP:           { col: "D", dtype: float, unit: HU }
+        HU_LDPE:          { col: "E", dtype: float, unit: HU }
+        HU_water:         { col: "F", dtype: float, unit: HU }
+        HU_polystyreen:   { col: "G", dtype: float, unit: HU }
+        HU_acrylic:       { col: "H", dtype: float, unit: HU }
+        HU_delrin:        { col: "I", dtype: float, unit: HU }
+        HU_teflon:        { col: "J", dtype: float, unit: HU }
+
+    CT_getal_lineair_buisB:
+      note: >
+        Sensitométrie tube B seul, à 100/Sn150 kV uniquement (2 lignes : Br40 + Br59).
+        Même structure de colonnes que CT_getal_lineair_mixed.
+      db_table: "iq/DS_CT_getal_lineair_buisB"
+      header_row: 78
+      data_start_row: 79
+      end_condition:
+        type: n_rows
+        n: 2
+      columns:
+        filter_kV_label:    { col: "A", dtype: string }
+        HU_lucht:           { col: "C", dtype: float, unit: HU }
+        HU_PMP:             { col: "D", dtype: float, unit: HU }
+        HU_LDPE:            { col: "E", dtype: float, unit: HU }
+        HU_water:           { col: "F", dtype: float, unit: HU }
+        HU_polystyreen:     { col: "G", dtype: float, unit: HU }
+        HU_acrylic:         { col: "H", dtype: float, unit: HU }
+        HU_delrin:          { col: "I", dtype: float, unit: HU }
+        HU_teflon:          { col: "J", dtype: float, unit: HU }
+
+    HU_water_lucht_mixed:
+      note: >
+        Vérification HU eau et HU air sur image mixed.
+        6 lignes (Br40/Br59 × 3 kVp).
+        Critères : |HU_water| < 10 HU, HU_lucht dans tolérance.
+        Cols Q–S = données CodeImageJ (HU + SD) pour traçabilité.
+      db_table: "iq/DS_HU_water_lucht_mixed"
+      header_row: 110
+      data_start_row: 111
+      end_condition:
+        type: n_rows
+        n: 6
+      columns:
+        filter_kV_label: { col: "A", dtype: string }
+        HU_water:        { col: "C", dtype: float, unit: HU }
+        limiet_water:    { col: "D", dtype: string }
+        pass_fail_water: { col: "E", dtype: string }
+        HU_lucht:        { col: "H", dtype: float, unit: HU }
+        pass_fail_lucht: { col: "J", dtype: string }
+        pass_fail_total: { col: "L", dtype: string, optional: true }
+      totaal:
+        pass_fail_water: { row: 117, col: "L", dtype: string }
+        pass_fail_lucht: { row: 117, col: "N", dtype: string }
+
+    HU_water_lucht_buisB:
+      note: >
+        Vérification HU eau et HU air tube B seul.
+        Seules 2 lignes sont valides (100/Sn150 kV, Br40 + Br59).
+        Les autres lignes (80/Sn150, 90/Sn150) contiennent NVT.
+        Parser : ignorer les lignes où pass_fail == "NVT".
+      db_table: "iq/DS_HU_water_lucht_buisB"
+      header_row: 118
+      data_start_row: 119
+      end_condition:
+        type: n_rows
+        n: 6
+      skip_if_value: "NVT"
+      skip_col: "E"
+      columns:
+        filter_kV_label: { col: "A", dtype: string }
+        HU_water:        { col: "C", dtype: float, unit: HU }
+        limiet_water:    { col: "D", dtype: string }
+        pass_fail_water: { col: "E", dtype: string }
+        HU_lucht:        { col: "H", dtype: float, unit: HU }
+        pass_fail_lucht: { col: "J", dtype: string }
+      totaal:
+        pass_fail_water: { row: 125, col: "L", dtype: string }
+        pass_fail_lucht: { row: 125, col: "N", dtype: string }
+
+    uniformiteit_mixed:
+      note: >
+        Uniformité sur image mixed.
+        12 lignes de données : 6 kVp × 2 sous-lignes (HU row, SD row).
+        Col B indique "HU" ou "SD". ROI centraal–links en cols C–G, gemiddelde en H,
+        Max. Uniformiteit HU en I, Max. Uniformiteit (%) en J.
+        Les named_results (UNIFDS...FBP) en col AG sont sur les lignes HU uniquement
+        (rows 131, 133, 135, 137, 139, 141).
+      db_table: "iq/DS_uniformiteit_mixed"
+      header_row: 130
+      data_start_row: 131
+      end_condition:
+        type: n_rows
+        n: 12
+      columns:
+        filter_kV_label:   { col: "A", dtype: string }
+        row_type:          { col: "B", dtype: string,
+                             note: "'HU' ou 'SD'" }
+        ROI_centraal:      { col: "C", dtype: float }
+        ROI_boven:         { col: "D", dtype: float }
+        ROI_rechts:        { col: "E", dtype: float }
+        ROI_onder:         { col: "F", dtype: float }
+        ROI_links:         { col: "G", dtype: float }
+        gemiddelde:        { col: "H", dtype: float }
+        max_unif_HU:       { col: "I", dtype: float, unit: HU }
+        max_unif_pct:      { col: "J", dtype: float }
+      named_results:
+        note: "Col AG sur les lignes HU (rows 131, 133, 135, 137, 139, 141)."
+        UNIFDS120SoftFBP:  { row: 131, col: "AG", dtype: string }
+        UNIFDS120HardFBP:  { row: 133, col: "AG", dtype: string }
+        UNIFDS140SoftFBP:  { row: 135, col: "AG", dtype: string }
+        UNIFDS140HardFBP:  { row: 137, col: "AG", dtype: string }
+        UNIFDS100SoftFBP:  { row: 139, col: "AG", dtype: string }
+        UNIFDS100HardFBP:  { row: 141, col: "AG", dtype: string }
+      summary_table:
+        note: "Résumé par filtre+kVp : Max. Uniformiteit HU vs limiet, pass_fail."
+        db_table: "iq/DS_uniformiteit_mixed_summary"
+        header_row: 144
+        data_start_row: 145
+        end_condition:
+          type: n_rows
+          n: 6
+        columns:
+          filter_kV_label: { col: "A", dtype: string }
+          max_unif_HU:     { col: "B", dtype: float, unit: HU }
+          limiet_HU:       { col: "C", dtype: float, unit: HU }
+          pass_fail:       { col: "D", dtype: string }
+      pass_fail_totaal:    { row: 129, col: "K", dtype: string }
+
+    uniformiteit_buisB:
+      note: >
+        Uniformité tube B seul, à 100/Sn150 kV uniquement.
+        4 lignes : Br40 + Br59 × 2 sous-lignes (HU + SD).
+      db_table: "iq/DS_uniformiteit_buisB"
+      header_row: 157
+      data_start_row: 158
+      end_condition:
+        type: n_rows
+        n: 4
+      columns:
+        filter_kV_label:   { col: "A", dtype: string }
+        row_type:          { col: "B", dtype: string,
+                             note: "'HU' ou 'SD'" }
+        ROI_centraal:      { col: "C", dtype: float }
+        ROI_boven:         { col: "D", dtype: float }
+        ROI_rechts:        { col: "E", dtype: float }
+        ROI_onder:         { col: "F", dtype: float }
+        ROI_links:         { col: "G", dtype: float }
+        gemiddelde:        { col: "H", dtype: float }
+        max_unif_HU:       { col: "I", dtype: float, unit: HU }
+        max_unif_pct:      { col: "J", dtype: float }
+      summary_table:
+        note: "2 lignes de résumé (Br40 + Br59)."
+        db_table: "iq/DS_uniformiteit_buisB_summary"
+        header_row: 163
+        data_start_row: 164
+        end_condition:
+          type: n_rows
+          n: 2
+        columns:
+          filter_kV_label: { col: "A", dtype: string }
+          max_unif_HU:     { col: "B", dtype: float, unit: HU }
+          limiet_HU:       { col: "C", dtype: float, unit: HU }
+          pass_fail:       { col: "D", dtype: string }
+      pass_fail_totaal:    { row: 154, col: "Q", dtype: string }
+
+    artefacten:
+      note: "Pass/fail visuel unique — pas de valeur numérique à stocker."
+      pass_fail: { row: 169, col: "H", dtype: string }
+
+  # ── BEELDKWALITEIT_DS_ITERATIEF ─────────────────────────────────────────────
+  beeldkwaliteit_ds_iteratief:
+    sheet_name: "Beeldkwaliteit_DS_Iteratief"
+    inject_columns:
+      recon_type: "iterative"
+      source_type: "dual_source"
+    is_dual_source: true
+    is_iterative: true
+    note: >
+      Structure identique à beeldkwaliteit_ds.
+      Différences : suffixes named_results FBP → I, noms de filtres Br40/Br59 avec suffixe itératif.
+
+    referentieopname:
+      note: "Paramètres de la scan de référence (fantôme Catphan, 120 kV)."
+      patient_name:   { row: 4,  col: "D", dtype: string }
+      protocol:       { row: 6,  col: "D", dtype: string }
+      ref_kVp:        { row: 7,  col: "D", dtype: int,    unit: kV }
+      eff_mAs:        { row: 8,  col: "D", dtype: float,  unit: mAs }
+      collimatie:     { row: 9,  col: "D", dtype: string }
+      rotatietijd_s:  { row: 10, col: "D", dtype: float,  unit: s }
+      pitch:          { row: 11, col: "D", dtype: float }
+      snededikte_mm:  { row: 12, col: "D", dtype: float,  unit: mm }
+      CTDIvol_mGy:    { row: 13, col: "D", dtype: float,  unit: mGy }
+      FOV_mm:         { row: 14, col: "D", dtype: int,    unit: mm }
+      scanmode:       { row: 15, col: "D", dtype: string }
+
+    referentiescan:
+      note: >
+        Paramètres de la scan QA effective (dual source : deux tubes).
+        Les kV et mAs sont encodés sous forme "tubeA / tubeB" (ex: "100 / Sn150", "177 / 98").
+        Les kV alternatifs (80/Sn150, 90/Sn150) et leurs mAs/CTDI sont en rows 31–32.
+      patient_name:   { row: 19, col: "D", dtype: string }
+      protocol:       { row: 20, col: "D", dtype: string }
+      ref_kVp:        { row: 21, col: "D", dtype: string,
+                        note: "Format 'tubeA / tubeB' ex: '100 / Sn150'" }
+      eff_mAs:        { row: 22, col: "D", dtype: string,
+                        note: "Format 'tubeA / tubeB' ex: '177 / 98'" }
+      collimatie:     { row: 23, col: "D", dtype: string }
+      rotatietijd_s:  { row: 24, col: "D", dtype: float,  unit: s }
+      pitch:          { row: 25, col: "D", dtype: float }
+      snededikte_mm:  { row: 26, col: "D", dtype: float,  unit: mm }
+      CTDIvol_mGy:    { row: 27, col: "D", dtype: float,  unit: mGy }
+      FOV_mm:         { row: 28, col: "D", dtype: int,    unit: mm }
+      scanmode:       { row: 29, col: "D", dtype: string }
+      kernel_soft:    { row: 31, col: "D", dtype: string,
+                        note: "Ex: 'Br40'" }
+      kernel_hard:    { row: 32, col: "D", dtype: string,
+                        note: "Ex: 'Br59'" }
+      alt_kV_low:     { row: 31, col: "G", dtype: string,
+                        note: "kV alternatif bas ex: '80 / Sn150'" }
+      alt_mAs_low:    { row: 31, col: "H", dtype: float,  unit: mAs }
+      alt_CTDI_low:   { row: 31, col: "I", dtype: float,  unit: mGy }
+      alt_kV_high:    { row: 32, col: "G", dtype: string,
+                        note: "kV alternatif haut ex: '90 / Sn150'" }
+      alt_mAs_high:   { row: 32, col: "H", dtype: float,  unit: mAs }
+      alt_CTDI_high:  { row: 32, col: "I", dtype: float,  unit: mGy }
+
+    CT_getal_lineair_mixed:
+      note: >
+        Sensitométrie sur image mixed (combinaison tubes A+B).
+        6 combinaisons filtre × kVp : Br40/Br59 × 100/Sn150, 80/Sn150, 90/Sn150.
+        Les HU mesurés (cols C–J) sont les données primaires à stocker.
+        Les cols K–S contiennent les données CodeImageJ (tube B référence) :
+          col K = label encodé "HU kVp: mAs: slice: kernel",
+          cols L–S = HU des 8 matériaux (même ordre que C–J).
+      db_table: "iq/DS_CT_getal_lineair_mixed"
+      header_row: 38
+      data_start_row: 39
+      end_condition:
+        type: n_rows
+        n: 6
+      columns:
+        filter_kV_label:  { col: "A", dtype: string,
+                            note: "Ex: 'Filter: Br40 - 100 / Sn150 kV'" }
+        HU_lucht:         { col: "C", dtype: float, unit: HU }
+        HU_PMP:           { col: "D", dtype: float, unit: HU }
+        HU_LDPE:          { col: "E", dtype: float, unit: HU }
+        HU_water:         { col: "F", dtype: float, unit: HU }
+        HU_polystyreen:   { col: "G", dtype: float, unit: HU }
+        HU_acrylic:       { col: "H", dtype: float, unit: HU }
+        HU_delrin:        { col: "I", dtype: float, unit: HU }
+        HU_teflon:        { col: "J", dtype: float, unit: HU }
+        codeImageJ_label: { col: "K", dtype: string,
+                            note: "Label CodeImageJ tube B de référence (lignes paires)" }
+        ref_HU_lucht:     { col: "L", dtype: float, unit: HU, optional: true }
+        ref_HU_PMP:       { col: "M", dtype: float, unit: HU, optional: true }
+        ref_HU_LDPE:      { col: "N", dtype: float, unit: HU, optional: true }
+        ref_HU_water:     { col: "O", dtype: float, unit: HU, optional: true }
+        ref_HU_polystyreen: { col: "P", dtype: float, unit: HU, optional: true }
+        ref_HU_acrylic:   { col: "Q", dtype: float, unit: HU, optional: true }
+        ref_HU_delrin:    { col: "R", dtype: float, unit: HU, optional: true }
+        ref_HU_teflon:    { col: "S", dtype: float, unit: HU, optional: true }
+      named_results:
+        note: "Col AG, une par ligne de données (rows 39, 40, 41, 42, 43, 44)."
+        HUDS120SoftI: { row: 39, col: "AG", dtype: string }
+        HUDS120HardI: { row: 40, col: "AG", dtype: string }
+        HUDS140SoftI: { row: 41, col: "AG", dtype: string }
+        HUDS140HardI: { row: 42, col: "AG", dtype: string }
+        HUDS100SoftI: { row: 43, col: "AG", dtype: string }
+        HUDS100HardI: { row: 44, col: "AG", dtype: string }
+
+    correlatie_mixed:
+      note: >
+        Coefficients de corrélation (R) entre HU mesurés et coefficients d'atténuation théoriques.
+        Critère : R > 0.99.
+      db_table: "iq/DS_correlatie_mixed"
+      header_row: 65
+      data_start_row: 66
+      end_condition:
+        type: n_rows
+        n: 6
+      columns:
+        filter_kV_label: { col: "A", dtype: string }
+        correlatie_R:    { col: "E", dtype: float }
+        limiet:          { col: "F", dtype: string }
+        pass_fail:       { col: "G", dtype: string }
+
+    CT_getal_lineair_buisB:
+      note: >
+        Sensitométrie tube B seul, à 100/Sn150 kV uniquement (2 lignes : Br40 + Br59).
+        Même structure de colonnes que CT_getal_lineair_mixed.
+      db_table: "iq/DS_CT_getal_lineair_buisB"
+      header_row: 78
+      data_start_row: 79
+      end_condition:
+        type: n_rows
+        n: 2
+      columns:
+        filter_kV_label:    { col: "A", dtype: string }
+        HU_lucht:           { col: "C", dtype: float, unit: HU }
+        HU_PMP:             { col: "D", dtype: float, unit: HU }
+        HU_LDPE:            { col: "E", dtype: float, unit: HU }
+        HU_water:           { col: "F", dtype: float, unit: HU }
+        HU_polystyreen:     { col: "G", dtype: float, unit: HU }
+        HU_acrylic:         { col: "H", dtype: float, unit: HU }
+        HU_delrin:          { col: "I", dtype: float, unit: HU }
+        HU_teflon:          { col: "J", dtype: float, unit: HU }
+        codeImageJ_label:   { col: "K", dtype: string, optional: true }
+        ref_HU_lucht:       { col: "L", dtype: float, unit: HU, optional: true }
+        ref_HU_PMP:         { col: "M", dtype: float, unit: HU, optional: true }
+        ref_HU_LDPE:        { col: "N", dtype: float, unit: HU, optional: true }
+        ref_HU_water:       { col: "O", dtype: float, unit: HU, optional: true }
+        ref_HU_polystyreen: { col: "P", dtype: float, unit: HU, optional: true }
+        ref_HU_acrylic:     { col: "Q", dtype: float, unit: HU, optional: true }
+        ref_HU_delrin:      { col: "R", dtype: float, unit: HU, optional: true }
+        ref_HU_teflon:      { col: "S", dtype: float, unit: HU, optional: true }
+
+    correlatie_buisB:
+      note: "Coefficients de corrélation tube B. 2 lignes (Br40 + Br59)."
+      db_table: "iq/DS_correlatie_buisB"
+      header_row: 104
+      data_start_row: 105
+      end_condition:
+        type: n_rows
+        n: 2
+      columns:
+        filter_kV_label: { col: "A", dtype: string }
+        correlatie_R:    { col: "E", dtype: float }
+        limiet:          { col: "F", dtype: string }
+        pass_fail:       { col: "G", dtype: string }
+
+    HU_water_lucht_mixed:
+      note: >
+        Vérification HU eau et HU air sur image mixed.
+        6 lignes (Br40/Br59 × 3 kVp).
+        Critères : |HU_water| < 10 HU, HU_lucht dans tolérance.
+        Cols Q–S = données CodeImageJ (HU + SD) pour traçabilité.
+      db_table: "iq/DS_HU_water_lucht_mixed"
+      header_row: 110
+      data_start_row: 111
+      end_condition:
+        type: n_rows
+        n: 6
+      columns:
+        filter_kV_label: { col: "A", dtype: string }
+        HU_water:        { col: "C", dtype: float, unit: HU }
+        limiet_water:    { col: "D", dtype: string }
+        pass_fail_water: { col: "E", dtype: string }
+        HU_lucht:        { col: "H", dtype: float, unit: HU }
+        pass_fail_lucht: { col: "J", dtype: string }
+        pass_fail_total: { col: "L", dtype: string, optional: true }
+      totaal:
+        pass_fail_water: { row: 117, col: "L", dtype: string }
+        pass_fail_lucht: { row: 117, col: "N", dtype: string }
+
+    HU_water_lucht_buisB:
+      note: >
+        Vérification HU eau et HU air tube B seul.
+        Seules 2 lignes sont valides (100/Sn150 kV, Br40 + Br59).
+        Les autres lignes (80/Sn150, 90/Sn150) contiennent NVT.
+        Parser : ignorer les lignes où pass_fail == "NVT".
+      db_table: "iq/DS_HU_water_lucht_buisB"
+      header_row: 118
+      data_start_row: 119
+      end_condition:
+        type: n_rows
+        n: 6
+      skip_if_value: "NVT"
+      skip_col: "E"
+      columns:
+        filter_kV_label: { col: "A", dtype: string }
+        HU_water:        { col: "C", dtype: float, unit: HU }
+        limiet_water:    { col: "D", dtype: string }
+        pass_fail_water: { col: "E", dtype: string }
+        HU_lucht:        { col: "H", dtype: float, unit: HU }
+        pass_fail_lucht: { col: "J", dtype: string }
+      totaal:
+        pass_fail_water: { row: 125, col: "L", dtype: string }
+        pass_fail_lucht: { row: 125, col: "N", dtype: string }
+
+    uniformiteit_mixed:
+      note: >
+        Uniformité sur image mixed.
+        12 lignes de données : 6 kVp × 2 sous-lignes (HU row, SD row).
+        Col B indique "HU" ou "SD". ROI centraal–links en cols C–G, gemiddelde en H,
+        Max. Uniformiteit HU en I, Max. Uniformiteit (%) en J.
+        Les named_results (UNIFDS...I) en col AG sont sur les lignes HU uniquement
+        (rows 131, 133, 135, 137, 139, 141).
+      db_table: "iq/DS_uniformiteit_mixed"
+      header_row: 130
+      data_start_row: 131
+      end_condition:
+        type: n_rows
+        n: 12
+      columns:
+        filter_kV_label:   { col: "A", dtype: string }
+        row_type:          { col: "B", dtype: string,
+                             note: "'HU' ou 'SD'" }
+        ROI_centraal:      { col: "C", dtype: float }
+        ROI_boven:         { col: "D", dtype: float }
+        ROI_rechts:        { col: "E", dtype: float }
+        ROI_onder:         { col: "F", dtype: float }
+        ROI_links:         { col: "G", dtype: float }
+        gemiddelde:        { col: "H", dtype: float }
+        max_unif_HU:       { col: "I", dtype: float, unit: HU }
+        max_unif_pct:      { col: "J", dtype: float }
+      named_results:
+        note: "Col AG sur les lignes HU (rows 131, 133, 135, 137, 139, 141)."
+        UNIFDS120SoftI:  { row: 131, col: "AG", dtype: string }
+        UNIFDS120HardI:  { row: 133, col: "AG", dtype: string }
+        UNIFDS140SoftI:  { row: 135, col: "AG", dtype: string }
+        UNIFDS140HardI:  { row: 137, col: "AG", dtype: string }
+        UNIFDS100SoftI:  { row: 139, col: "AG", dtype: string }
+        UNIFDS100HardI:  { row: 141, col: "AG", dtype: string }
+      summary_table:
+        note: "Résumé par filtre+kVp : Max. Uniformiteit HU vs limiet, pass_fail."
+        db_table: "iq/DS_uniformiteit_mixed_summary"
+        header_row: 144
+        data_start_row: 145
+        end_condition:
+          type: n_rows
+          n: 6
+        columns:
+          filter_kV_label: { col: "A", dtype: string }
+          max_unif_HU:     { col: "B", dtype: float, unit: HU }
+          limiet_HU:       { col: "C", dtype: float, unit: HU }
+          pass_fail:       { col: "D", dtype: string }
+      pass_fail_totaal:    { row: 129, col: "K", dtype: string }
+
+    uniformiteit_buisB:
+      note: >
+        Uniformité tube B seul, à 100/Sn150 kV uniquement.
+        4 lignes : Br40 + Br59 × 2 sous-lignes (HU + SD).
+      db_table: "iq/DS_uniformiteit_buisB"
+      header_row: 157
+      data_start_row: 158
+      end_condition:
+        type: n_rows
+        n: 4
+      columns:
+        filter_kV_label:   { col: "A", dtype: string }
+        row_type:          { col: "B", dtype: string,
+                             note: "'HU' ou 'SD'" }
+        ROI_centraal:      { col: "C", dtype: float }
+        ROI_boven:         { col: "D", dtype: float }
+        ROI_rechts:        { col: "E", dtype: float }
+        ROI_onder:         { col: "F", dtype: float }
+        ROI_links:         { col: "G", dtype: float }
+        gemiddelde:        { col: "H", dtype: float }
+        max_unif_HU:       { col: "I", dtype: float, unit: HU }
+        max_unif_pct:      { col: "J", dtype: float }
+      summary_table:
+        note: "2 lignes de résumé (Br40 + Br59)."
+        db_table: "iq/DS_uniformiteit_buisB_summary"
+        header_row: 163
+        data_start_row: 164
+        end_condition:
+          type: n_rows
+          n: 2
+        columns:
+          filter_kV_label: { col: "A", dtype: string }
+          max_unif_HU:     { col: "B", dtype: float, unit: HU }
+          limiet_HU:       { col: "C", dtype: float, unit: HU }
+          pass_fail:       { col: "D", dtype: string }
+      pass_fail_totaal:    { row: 154, col: "Q", dtype: string }
+
+    artefacten:
+      note: "Pass/fail visuel unique — pas de valeur numérique à stocker."
+      pass_fail: { row: 169, col: "H", dtype: string }
+
+  # ── SNEDEDIKTE ──────────────────────────────────────────────────────────────
+  snededikte:
+    sheet_name: "Snededikte"
+    sections:
+
+      acquisition_params:
+        scan_type:     { row: 2, col: "A", dtype: string }
+        protocol:      { row: 3, col: "D", dtype: string }
+        drecon_gt2mm:  { row: 6, col: "D", dtype: float, unit: mm }
+        drecon_lt2mm:  { row: 6, col: "G", dtype: float, unit: mm }
+        kernel_soft:   { row: 8, col: "D", dtype: string }
+        kernel_hard:   { row: 9, col: "D", dtype: string }
+
+      slice_thickness_gt2mm:
+        header_row: 11
+        data_start_row: 12
+        end_row: 13
+        db_table: "geometry/slice_thickness_gt2mm"
+        bhpa_criterion: "deviation_abs_mm < 1 mm"
+        columns:
+          size_category:      { col: "B", dtype: string }
+          kernel:             { col: "C", dtype: string }
+          fwhm_measured_mm:   { col: "D", dtype: float, unit: mm }
+          nominal_mm:         { col: "E", dtype: float, unit: mm }
+          deviation_abs_mm:   { col: "F", dtype: float, unit: mm }
+          deviation_rel:      { col: "G", dtype: float }
+
+      slice_thickness_lt2mm:
+        header_row: 18
+        data_start_row: 19
+        end_row: 20
+        db_table: "geometry/slice_thickness_lt2mm"
+        bhpa_criterion: "deviation_rel < 0.5 (50%)"
+        columns:
+          size_category:    { col: "B", dtype: string }
+          kernel:           { col: "C", dtype: string }
+          fwhm_measured_mm: { col: "D", dtype: float, unit: mm }
+          nominal_mm:       { col: "E", dtype: float, unit: mm }
+          deviation_abs_mm: { col: "F", dtype: float, unit: mm }
+          deviation_rel:    { col: "G", dtype: float }
+
+  # ── PROTOCOLLEN ─────────────────────────────────────────────────────────────
+  protocollen:
+    sheet_name: "protocollen"
+    sections:
+
+      adult_protocols:
+        anchor_text: "Scan Param"
+        header_row: 4
+        data_start_row: 5
+        end_condition: { type: empty_col, col: "A" }
+        db_table: "protocols/adult"
+        columns:
+          protocol_name: { col: "A", dtype: string }
+          kV:            { col: "B", dtype: string,
+                           note: "dtype string — peut contenir 'Sn150' ou '90/Sn150'" }
+          eff_mAs:       { col: "C", dtype: float, unit: mAs }
+          pitch:         { col: "D", dtype: float }
+          collimation:   { col: "E", dtype: string,  optional: true }
+          CTDIvol_mGy:   { col: "F", dtype: float,   unit: mGy, optional: true }
+          DLP_mGycm:     { col: "G", dtype: float,   unit: "mGy·cm", optional: true }
+
+      child_protocols:
+        anchor_text: "Scan Param"
+        anchor_occurrence: 2
+        header_row: 21
+        data_start_row: 22
+        end_condition: { type: empty_col, col: "A" }
+        db_table: "protocols/pediatric"
+        columns:
+          protocol_name:    { col: "A", dtype: string }
+          kV:               { col: "B", dtype: string }
+          eff_mAs:          { col: "C", dtype: float, unit: mAs }
+          feed_per_rot_mm:  { col: "H", dtype: float, unit: mm,
+                              note: "feed/rotation — différent du pitch adulte" }
+          collimation:      { col: "E", dtype: string,  optional: true }
+          CTDIvol_mGy:      { col: "F", dtype: float,   unit: mGy, optional: true }
+          DLP_mGycm:        { col: "G", dtype: float,   unit: "mGy·cm", optional: true }

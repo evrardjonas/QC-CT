@@ -1,0 +1,106 @@
+
+## 📁 **CONFIG/ - SCHÉMAS DE VALIDATION**
+
+### **config/sidecar_schemas/template_schema.json**
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CT-QC Template Schema",
+  "description": "Schema de validation pour les fichiers template YAML",
+  "type": "object",
+  "required": ["id", "version", "description"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identifiant unique du template"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version du template",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["base", "standard", "dual_energy", "vendor_specific", "custom"],
+      "description": "Type de template"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description du template"
+    },
+    "extends": {
+      "type": "string",
+      "description": "Template parent pour l'héritage"
+    },
+    "sheets": {
+      "type": "object",
+      "description": "Définition des feuilles Excel",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "required": {
+            "type": "boolean",
+            "description": "Si la feuille est obligatoire"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Champs de la feuille",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Nom défini Excel"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["string", "number", "date", "boolean"],
+                  "description": "Type de données"
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "Champ obligatoire"
+                },
+                "normalize": {
+                  "type": "object",
+                  "description": "Règles de normalisation"
+                },
+                "validators": {
+                  "type": "array",
+                  "description": "Liste de validateurs"
+                }
+              },
+              "required": ["name", "type"]
+            }
+          },
+          "tables": {
+            "type": "object",
+            "description": "Tables de la feuille",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "table": {
+                  "type": "string",
+                  "description": "Nom de la table Excel"
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "Table obligatoire"
+                },
+                "columns": {
+                  "type": "object",
+                  "description": "Colonnes de la table"
+                },
+                "derive": {
+                  "type": "object",
+                  "description": "Champs dérivés"
+                }
+              },
+              "required": ["table"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

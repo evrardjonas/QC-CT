@@ -1,0 +1,22 @@
+# Configuration développement CT-QC
+extends: "default.yml"
+
+environment: "development"
+
+processing:
+  dry_run: false
+  strict_validation: false
+
+logging:
+  console_level: "DEBUG"
+  file_level: "DEBUG"
+
+engine:
+  validation:
+    strict_mode: false
+    log_warnings: true
+
+exports:
+  parquet_enabled: true
+  access_enabled: true
+  audit_enabled: true

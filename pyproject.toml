@@ -1,0 +1,36 @@
+[project]
+name = "ct-qc-orchestrator"
+version = "2025.1.0"
+description = "Pipeline d'ingestion et d'analytics pour les contrôles de qualité CT"
+authors = [
+    {name = "Votre Équipe", email = "contact@example.com"},
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "openpyxl>=3.1.0",
+    "pandas>=2.0.0",
+    "pyarrow>=12.0.0",
+    "tables>=3.8.0",
+    "duckdb>=0.9.0",
+    "polars>=0.19.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+ctqc-ingest = "bin.ctqc_ingest:main"
+ctqc-analytics = "bin.ctqc_analytics:main"
+ctqc-export = "bin.ctqc_export:main"
+
+[project.urls]
+Homepage = "https://github.com/votre-org/ct-qc-orchestrator"
+Documentation = "https://github.com/votre-org/ct-qc-orchestrator/docs"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "bin*"]
+
+[tool.setuptools.package-dir]
+"src" = "src"
+"bin" = "bin"

@@ -1,0 +1,12 @@
+# Registry des templates CT-QC - Version simplifiée
+version: "2025.1"
+description: "Registry simplifié - Template unique ctqc_base"
+
+templates:
+  ctqc_base:
+    description: "Template unique pour visites CT-QC complètes"
+    type: "base"
+    required_sheets: ["Verslag"]
+    required_tables: []
+    base_score: 100  # Score élevé car seul template
+    extends: null
